@@ -39,7 +39,7 @@ export default {
   },
   data() {
     return {
-      expandHeight: 0
+      expandHeight: 0,
     };
   },
   computed: {
@@ -58,15 +58,19 @@ export default {
     this.$nextTick(() => {
       this.measureAndEmit();
     });
-
+    const random = Math.floor(Math.random() * 2);
+    console.log({random, id: this.message.id})
+    if (random) {
+        this.expandTimer = setTimeout(() => {
+            this.expandHeight = Math.floor(Math.random() * (200 - 100 + 1)) + 200;
+            // Measure new height and emit it
+            this.$nextTick(() => {
+                this.measureAndEmit();
+            });
+        }, 200);
+    }
     // After 500ms, increase height by 200-300px to test dynamic height changes
-    // this.expandTimer = setTimeout(() => {
-    //   this.expandHeight = Math.floor(Math.random() * (300 - 200 + 1)) + 200;
-    //   // Measure new height and emit it
-    //   this.$nextTick(() => {
-    //     this.measureAndEmit();
-    //   });
-    // }, 200);
+   
   },
   methods: {
     measureAndEmit() {

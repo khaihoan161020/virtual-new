@@ -246,6 +246,9 @@ export default {
         // Check if near top and emit event to load more
         this.checkAndEmitNearTop();
 
+        // Check if near bottom and emit event to load more
+        this.checkAndEmitNearBottom();
+
         this.scrollTicking = false;
       });
     },
@@ -261,6 +264,20 @@ export default {
           topIndex: this.startIndex,
           message: 'Load more items above'
         });
+      }
+    },
+
+    // Check if user scrolled near bottom, emit event to load more items
+    checkAndEmitNearBottom() {
+      // Trigger load more when user is within bottom 20 items offset
+      const itemThreshold = 20;
+      
+      if (this.endIndex >= this.items.length - itemThreshold && this.endIndex < this.items.length) {
+        // Emit event to load more
+        // this.$emit('scroll-bottom', {
+        //   bottomIndex: this.endIndex,
+        //   message: 'Load more items below'
+        // });
       }
     },
 
@@ -382,6 +399,52 @@ export default {
           const newScrollTop = scrollTopBefore + totalPrependedHeight;
           el.scrollTop = newScrollTop;
         }, 100);
+      });
+    },
+
+    // Jump to a specific message by ID
+    jumpToMessageById(messageId) {
+      // Find the index of the message with the given ID
+      const index = this.items.findIndex(item => this.getKey(item) === messageId);
+      
+      if (index === -1) {
+        console.warn(`Message with ID ${messageId} not found`);
+        return;
+      }
+
+      const el = this.$refs.container;
+      
+      // First, force render the target item and surrounding items to measure heights
+      this.startIndex = Math.max(0, index - 5);
+      this.endIndex = Math.min(this.items.length, index + 5);
+      
+      // Function to calculate and perform jump with current heights
+      const performJump = () => {
+        // Recalculate scroll position with current heights each time
+        let scrollTop = 0;
+        for (let i = 0; i < index; i++) {
+          const key = this.getKey(this.items[i]);
+          scrollTop += this.heights[key] || ESTIMATED_HEIGHT;
+        }
+        
+        el.scrollTop = scrollTop;
+        this.stickyBottom = false;
+        this.calculateVisibleRange();
+      };
+
+      // Wait for DOM to render target items, then measure and jump
+      this.$nextTick(() => {
+        // Measure all visible items
+        this.measureVisible();
+        
+        performJump();
+        
+        requestAnimationFrame(() => {
+          performJump();
+          requestAnimationFrame(() => {
+            performJump();
+          });
+        });
       });
     },
 

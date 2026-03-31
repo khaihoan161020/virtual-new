@@ -6,6 +6,15 @@
         <div class="controls">
           <button @click="addMessage">Add Message</button>
           <button @click="clearMessages">Clear All</button>
+          <div class="jump-to-input">
+            <input 
+              v-model.number="jumpMessageId" 
+              type="number" 
+              placeholder="Enter message ID to jump"
+              @keyup.enter="handleJumpToMessage"
+            />
+            <button @click="handleJumpToMessage">Jump to ID</button>
+          </div>
           <span class="message-count">{{ messages.length }} messages</span>
         </div>
       </div>
@@ -16,6 +25,7 @@
         :buffer="40"
         class="chat-list"
         @scroll-top="onScrollTop"
+        @scroll-bottom="onScrollBottom"
       >
         <template slot-scope="{ item }">
           <Message :message="item" />
@@ -54,7 +64,8 @@ export default {
   data() {
     return {
       messages: [],
-      messageId: 0
+      messageId: 0,
+      jumpMessageId: null
     }
   },
   mounted() {
@@ -93,6 +104,14 @@ export default {
       this.messages = []
       this.messageId = 0
     },
+    onScrollBottom() {
+      // Simulate auto-loading new messages when scrolling to bottom
+      setTimeout(() => {
+        for (let i = 0; i < 20; i++) {
+          this.messages.push(this.createMessage())
+        }
+      }, 500);
+    },
     onScrollTop() {
       // Prevent multiple concurrent loads
       if (this.$refs.virtualScroll.isLoading) return;
@@ -116,6 +135,13 @@ export default {
           this.$refs.virtualScroll.setLoading(false);
         });
       }, 800);
+    },
+    handleJumpToMessage() {
+      if (this.jumpMessageId === null || this.jumpMessageId === '') {
+        alert('Please enter a message ID');
+        return;
+      }
+      this.$refs.virtualScroll.jumpToMessageById(this.jumpMessageId);
     }
   }
 }
@@ -169,6 +195,26 @@ export default {
 
 .controls button:hover {
   background: #1976d2;
+}
+
+.jump-to-input {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.jump-to-input input {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 180px;
+}
+
+.jump-to-input input:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
 }
 
 .message-count {
